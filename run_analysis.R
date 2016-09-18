@@ -1,49 +1,53 @@
 setwd("~/Downloads/DataScience/Course-3/Week4/Assignment/GettingAndCleaningDataCourseProject")
+#################################################################################
+##Load features and datasets
+#################################################################################
+subject_train = read.csv("./../UCI HAR Dataset/train/subject_train.txt",header=FALSE, sep = "")
+X_train  = read.csv("./../UCI HAR Dataset/train/X_train.txt",header=FALSE, sep = "")
+y_train  = read.csv("./../UCI HAR Dataset/train/y_train.txt",header=FALSE, sep = "")
+subject_test = read.csv("./../UCI HAR Dataset/test/subject_test.txt",header=FALSE, sep = "")
+X_test  = read.csv("./../UCI HAR Dataset/test/X_test.txt",header=FALSE, sep = "")
+y_test  = read.csv("./../UCI HAR Dataset/test/y_test.txt",header=FALSE, sep = "")
+labels <- read.csv("./../UCI HAR Dataset/activity_labels.txt", header = FALSE, sep = "")
+features <- read.csv("./../UCI HAR Dataset/features.txt", header = FALSE, sep = "")
 
-options(stringsAsFactors=FALSE)
-######################################################################################################3
-##Read Data from test and train datasets
-######################################################################################################3
-#Test
-body_acc_x_test <- read.csv("./../UCI HAR Dataset/test/Inertial Signals/body_acc_x_test.txt", sep = "", header = FALSE, colClasses = "numeric")
-body_acc_y_test <- read.csv("./../UCI HAR Dataset/test/Inertial Signals/body_acc_y_test.txt", sep = "", header = FALSE, colClasses = "numeric")
-body_acc_z_test <- read.csv("./../UCI HAR Dataset/test/Inertial Signals/body_acc_z_test.txt", sep = "", header = FALSE, colClasses = "numeric")
+#################################################################################
+##Combine and name the columns(Step 1 & 2)
+#################################################################################
+X_Total <- rbind(X_train, X_test)
+y_Total <- rbind(y_train, y_test)
+subject_Total <- rbind(subject_train, subject_test)
 
-body_gyro_x_test <- read.csv("./../UCI HAR Dataset/test/Inertial Signals/body_gyro_x_test.txt", sep = "", header = FALSE, colClasses = "numeric")
-body_gyro_y_test <- read.csv("./../UCI HAR Dataset/test/Inertial Signals/body_gyro_y_test.txt", sep = "", header = FALSE, colClasses = "numeric")
-body_gyro_z_test <- read.csv("./../UCI HAR Dataset/test/Inertial Signals/body_gyro_z_test.txt", sep = "", header = FALSE, colClasses = "numeric")
+# Extract only the mean and standard deviation values for each measurement
+FeaturesNames_Mean_STD <- grep("-(mean|std)\\(\\)", features[, 2])
 
-total_acc_x_test <- read.csv("./../UCI HAR Dataset/test/Inertial Signals/total_acc_x_test.txt", sep = "", header = FALSE, colClasses = "numeric")
-total_acc_y_test <- read.csv("./../UCI HAR Dataset/test/Inertial Signals/total_acc_y_test.txt", sep = "", header = FALSE, colClasses = "numeric")
-total_acc_z_test <- read.csv("./../UCI HAR Dataset/test/Inertial Signals/total_acc_y_test.txt", sep = "", header = FALSE, colClasses = "numeric")
+# subset the required columns
+X_Total <- X_Total[, FeaturesNames_Mean_STD]
 
-y_test <- read.csv("./../UCI HAR Dataset/test/y_test.txt", sep = "", header = FALSE, colClasses = "numeric")
-subject_test <- read.csv("./../UCI HAR Dataset/test/subject_test.txt", sep = "", header = FALSE, colClasses = "numeric")
+# correcting the column names
+names(X_Total) <- features[FeaturesNames_Mean_STD, 2]
 
-#Train
-body_acc_x_train <- read.csv("./../UCI HAR Dataset/train/Inertial Signals/body_acc_x_train.txt", sep = "", header = FALSE, colClasses = "numeric")
-body_acc_y_train <- read.csv("./../UCI HAR Dataset/train/Inertial Signals/body_acc_y_train.txt", sep = "", header = FALSE, colClasses = "numeric")
-body_acc_z_train <- read.csv("./../UCI HAR Dataset/train/Inertial Signals/body_acc_z_train.txt", sep = "", header = FALSE, colClasses = "numeric")
 
-body_gyro_x_train <- read.csv("./../UCI HAR Dataset/train/Inertial Signals/body_gyro_x_train.txt", sep = "", header = FALSE, colClasses = "numeric")
-body_gyro_y_train <- read.csv("./../UCI HAR Dataset/train/Inertial Signals/body_gyro_y_train.txt", sep = "", header = FALSE, colClasses = "numeric")
-body_gyro_z_train <- read.csv("./../UCI HAR Dataset/train/Inertial Signals/body_gyro_z_train.txt", sep = "", header = FALSE, colClasses = "numeric")
+#################################################################################
+##Use descriptive activity names to name the activities in the data set(Step 3)
+#################################################################################
+y_Total[, 1] <- labels[y_Total[, 1], 2]
 
-total_acc_x_train <- read.csv("./../UCI HAR Dataset/train/Inertial Signals/total_acc_x_train.txt", sep = "", header = FALSE, colClasses = "numeric")
-total_acc_y_train <- read.csv("./../UCI HAR Dataset/train/Inertial Signals/total_acc_y_train.txt", sep = "", header = FALSE, colClasses = "numeric")
-total_acc_z_train <- read.csv("./../UCI HAR Dataset/train/Inertial Signals/total_acc_y_train.txt", sep = "", header = FALSE, colClasses = "numeric")
+#################################################################################
+##(Step 4)
+#################################################################################
+names(y_Total) <- "movement"
+names(subject_Total) <- "subject"
 
-y_train <- read.csv("./../UCI HAR Dataset/train/y_train.txt", sep = "", header = FALSE, colClasses = "numeric")
-subject_train <- read.csv("./../UCI HAR Dataset/train/subject_train.txt", sep = "", header = FALSE, colClasses = "numeric")
+# bind all the data in a single data set
+Total <- cbind(X_Total, y_Total, subject_Total)
 
-###################################################################################################
-##Combining Test and train datasets
-###################################################################################################
 
-Test <- data.frame(body_acc_x_test, body_acc_y_test, body_acc_z_test, body_gyro_x_test, body_gyro_y_test, body_gyro_z_test, 
-                   total_acc_x_test, total_acc_y_test, total_acc_z_test, y_test, subject_test)
-Train <- data.frame(body_acc_x_train, body_acc_y_train, body_acc_z_train, body_gyro_x_train, body_gyro_y_train, body_gyro_z_train, 
-                    total_acc_x_train, total_acc_y_train, total_acc_z_train, y_train, subject_train)
-Total <- rbind(Train, Test)
+#################################################################################
+##Create independent tidy data set(Step 5)
+#################################################################################
+library(reshape2)
+library(plyr)
+Averages <- ddply(Total, .(subject, movement), function(x) colMeans(x[, 1:65]))
 
-write.table(Total, file="CleanedData.txt", row.names = FALSE)
+write.table(Averages, "./../UCI HAR Dataset/Averages.txt", row.name=FALSE)
